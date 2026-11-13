@@ -66,6 +66,8 @@ section.blk{background:var(--card);border:1px solid var(--line);border-radius:14
 .goal{font-family:var(--display);font-size:1.08rem}
 .outcome{color:var(--sub);font-size:.92rem;margin-top:2px}
 .verify{margin-top:6px;font-size:.88rem;background:var(--teal-soft);color:var(--teal);border-radius:8px;padding:4px 10px;display:inline-block}
+.dayinfo{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px 14px;margin:10px 0 4px;padding:12px;border-radius:12px;background:var(--lav)}
+.dayinfo input{background:var(--card)}
 .bitem{padding:14px 0;border-top:1px dashed var(--line);display:grid;gap:8px}
 .bitem .cat{font-size:.8rem;color:var(--accent);background:var(--accent-soft);border-radius:6px;padding:1px 8px;justify-self:start}
 .bitem h4{margin:0;font-size:1rem;font-weight:600}
@@ -531,7 +533,12 @@ const BD_ITEMS=BUDDY.items;
   for(let d=1;d<=7;d++){
     const day=BUDDY.days[d]||{},its=BD_ITEMS.filter(x=>x.day===d);
     h+=`<section class="blk" id="bd_day${d}"><div class="dayhead"><div class="daybadge">Day ${d}<small>${its.length} หัวข้อ</small></div><div>
-      <div class="goal">${esc(day.goal||"")}</div><div class="outcome">${esc(day.outcome||"")}</div>${day.verify?`<div class="verify">Buddy ตรวจยืนยัน: ${esc(day.verify)}</div>`:""}</div></div>`;
+      <div class="goal">${esc(day.goal||"")}</div><div class="outcome">${esc(day.outcome||"")}</div>${day.verify?`<div class="verify">Buddy ตรวจยืนยัน: ${esc(day.verify)}</div>`:""}</div></div>
+      <div class="dayinfo">
+        <label class="field"><span class="req">วันเริ่มเรียน Day ${d}</span><input type="date" id="bdd_${d}_date"></label>
+        <label class="field"><span class="req">รหัสพนักงานผู้สอน</span><input type="text" id="bdd_${d}_bid" autocomplete="off"></label>
+        <label class="field"><span class="req">ชื่อ Buddy (ผู้สอน)</span><input type="text" id="bdd_${d}_bname" autocomplete="off"></label>
+      </div>`;
     its.forEach(it=>{
       h+=`<div class="bitem" id="bi_${it.id}"><span class="cat">${esc(it.cat)}</span><h4>${esc(it.topic)}</h4>
         <div class="act"><b>กิจกรรมของ Buddy:</b> ${esc(it.act).replace(/\n/g,"<br>")}</div>
@@ -570,6 +577,12 @@ function bdFillShops(area,code){
 }
 function bdShowShop(){const s=shopOf($("#bd_shop").value);$("#bd_shopCard").innerHTML=s?`<b>${esc(s.code)}</b> · ${esc(s.name)}`:"ยังไม่ได้เลือกสาขา"}
 $("#bd_area").addEventListener("change",()=>bdFillShops($("#bd_area").value,""));
+function bdPrefill(){
+  const bid=val("bd_buddyId"),bn=val("bd_buddy"),st=$("#bd_start").value;
+  for(let n=1;n<=7;n++){if(bid&&!val(`bdd_${n}_bid`))$(`#bdd_${n}_bid`).value=bid;if(bn&&!val(`bdd_${n}_bname`))$(`#bdd_${n}_bname`).value=bn}
+  if(st&&!$("#bdd_1_date").value)$("#bdd_1_date").value=st;
+}
+["bd_buddyId","bd_buddy","bd_start"].forEach(id=>$("#"+id).addEventListener("change",()=>{bdPrefill();try{localStorage.setItem(BD_DRAFT,JSON.stringify(bdCollect()))}catch(e){}}));
 $("#bd_shop").addEventListener("change",bdShowShop);
 const BD_FIELDS=[["bd_learnerId","learnerId"],["bd_name","name"],["bd_start","startDate"],["bd_buddyId","buddyId"],["bd_buddy","buddy"],["bd_supId","supId"],["bd_sup","sup"],["bd_summary","summary"],["bd_sign","buddySign"],["bd_signDate","buddySignDate"],["bd_mgr","mgrAck"]];
 function bdCollect(){
@@ -577,6 +590,7 @@ function bdCollect(){
   d.area=$("#bd_area").value;d.rrh=SHOPS.rrh[d.area]||"";
   const sh=shopOf($("#bd_shop").value)||{};d.shopCode=sh.code||"";d.branch=sh.name||"";
   d.items={};BD_ITEMS.forEach(it=>d.items[it.id]={s:radio("bs_"+it.id),date:$("#bdt_"+it.id).value,note:val("bn_"+it.id)});
+  d.days={};for(let n=1;n<=7;n++)d.days[n]={date:$(`#bdd_${n}_date`).value,buddyId:val(`bdd_${n}_bid`),buddy:val(`bdd_${n}_bname`)};
   const v=Object.values(d.items);d.progress=v.filter(x=>x.s).length;d.followCount=v.filter(x=>x.s==="follow").length;
   return d;
 }
@@ -584,6 +598,7 @@ function bdFill(d){
   d=d||{};BD_FIELDS.forEach(([id,k])=>$("#"+id).value=d[k]||"");
   $("#bd_area").value=d.area&&SHOPS.areas[d.area]?d.area:"";bdFillShops($("#bd_area").value,d.shopCode||"");
   BD_ITEMS.forEach(it=>{const x=(d.items||{})[it.id]||{};document.querySelectorAll(`input[name="bs_${it.id}"]`).forEach(r=>r.checked=r.value===x.s);$("#bdt_"+it.id).value=x.date||"";$("#bn_"+it.id).value=x.note||""});
+  for(let n=1;n<=7;n++){const x=(d.days||{})[n]||{};$(`#bdd_${n}_date`).value=x.date||"";$(`#bdd_${n}_bid`).value=x.buddyId||"";$(`#bdd_${n}_bname`).value=x.buddy||""}
   bdSync();
 }
 function bdSync(){
@@ -608,6 +623,7 @@ function bdValidate(d){
   need(d.learnerId,"รหัสพนักงานผู้เรียน","bd_learnerId");need(d.name,"ชื่อพนักงานผู้เรียน","bd_name");need(d.startDate,"วันเริ่มเรียน","bd_start");
   need(d.area,"Area","bd_area");need(d.shopCode,"Shop Code / Shop Name","bd_shop");
   need(d.buddyId,"รหัสพนักงานผู้สอน","bd_buddyId");need(d.buddy,"ชื่อ Buddy","bd_buddy");need(d.supId,"รหัสพนักงานหัวหน้างาน","bd_supId");need(d.sup,"ชื่อหัวหน้างาน","bd_sup");
+  for(let n=1;n<=7;n++){const x=d.days[n];need(x.date,`วันเริ่มเรียน Day ${n}`,`bdd_${n}_date`);need(x.buddyId,`รหัสพนักงานผู้สอน Day ${n}`,`bdd_${n}_bid`);need(x.buddy,`ชื่อ Buddy Day ${n}`,`bdd_${n}_bname`)}
   const bad=BD_ITEMS.filter(it=>{const x=d.items[it.id];return !x.s||!x.date||(x.s==="follow"&&!x.note)});
   bad.forEach(it=>$("#bi_"+it.id).classList.add("missing"));
   if(bad.length){const days=[...new Set(bad.map(it=>it.day))];miss.push(`สถานะ/วันที่ ยังไม่ครบ ${bad.length} หัวข้อ (Day ${days.join(", ")})`)}
@@ -668,7 +684,7 @@ $("#bdForm").addEventListener("submit",async ev=>{
     try{const m=JSON.parse(localStorage.getItem(MINE)||"[]");m.unshift({...body,_id:res.id});localStorage.setItem(MINE,JSON.stringify(m.slice(0,200)))}catch(e){}
     loadMine();
     try{localStorage.removeItem(BD_DRAFT)}catch(e){}
-    bdFill({area:d.area,shopCode:d.shopCode,buddyId:d.buddyId,buddy:d.buddy,supId:d.supId,sup:d.sup});
+    bdFill({area:d.area,shopCode:d.shopCode,buddyId:d.buddyId,buddy:d.buddy,supId:d.supId,sup:d.sup});bdPrefill();
     window.scrollTo({top:0,behavior:"smooth"});toast("ส่งแล้ว");
   }catch(e){msg.className="msg err";msg.textContent="ส่งไม่สำเร็จ ตรวจสอบอินเทอร์เน็ตแล้วกดส่งอีกครั้ง ข้อมูลที่กรอกยังอยู่ครบ"}
   finally{btn.disabled=false}
@@ -806,6 +822,7 @@ function buddyDetailHTML(r){
    <dt>Manager Acknowledge</dt><dd>${esc(r.mgrAck||"–")}</dd>
    <dt>ส่งเมื่อ</dt><dd>${thStamp(r.submittedAt)}</dd></dl></section>
   ${[1,2,3,4,5,6,7].map(d=>`<section class="blk"><div class="blk-h"><span class="tag">Day ${d}</span><h2>${esc((BUDDY.days[d]||{}).goal||"")}</h2></div>
+   ${(()=>{const x=(r.days||{})[d];return x?`<div class="hint" style="margin-bottom:6px">วันเริ่มเรียน ${thDate(x.date)} • ผู้สอน ${esc(x.buddy||"–")} <span>${esc(x.buddyId||"")}</span></div>`:""})()}
    ${BD_ITEMS.filter(x=>x.day===d).map(x=>{const v=it[x.id]||{};return `<div class="ditem"><b>${esc(x.topic)}</b><span>${v.s==="follow"?'<span class="pill bad">Need Follow-up</span>':v.s==="practiced"?'<span class="pill ok">Practiced</span>':v.s?`<span class="pill n">${esc((BSTAT_TXT[v.s]||"").split(" (")[0])}</span>`:'<span class="pill n">–</span>'}</span><div class="note">${thDate(v.date)}${v.note?` • ${esc(v.note)}`:""}</div></div>`}).join("")}</section>`).join("")}`;
 }
 function openDetail(r,admin){
@@ -841,10 +858,12 @@ function table2d(list){
 }
 function buddyTable2d(list){
   const head=["ส่งเมื่อ","รหัสพนักงานผู้เรียน","ชื่อพนักงานผู้เรียน","วันเริ่มเรียน","RRH","Area","Shop Code","Shop Name","รหัสพนักงานผู้สอน","ชื่อ Buddy","รหัสพนักงานหัวหน้างาน","ชื่อหัวหน้างาน",
+    ...[1,2,3,4,5,6,7].flatMap(n=>[`Day ${n} วันเริ่มเรียน`,`Day ${n} รหัสพนักงานผู้สอน`,`Day ${n} ชื่อ Buddy (ผู้สอน)`]),
     ...BD_ITEMS.flatMap(x=>{const t=`Day ${x.day}: ${x.topic.length>60?x.topic.slice(0,60)+"…":x.topic}`;return [t+" [สถานะ]",t+" [วันที่]",t+" [หมายเหตุ]"]}),
     "ความคืบหน้า (หัวข้อ)","จำนวน Need Follow-up","สรุปส่งต่อ Manager/OJT Coach","Buddy Sign-off","วันที่ Sign-off","Manager Acknowledge"];
   const lines=[head];
   list.forEach(r=>{const it=r.items||{};lines.push([thStamp(r.submittedAt),r.learnerId,r.name,thDate(r.startDate),r.rrh||"",r.area||"",r.shopCode||"",r.branch,r.buddyId,r.buddy,r.supId,r.sup,
+    ...[1,2,3,4,5,6,7].flatMap(n=>{const x=(r.days||{})[n]||{};return [x.date?thDate(x.date):"",x.buddyId||"",x.buddy||""]}),
     ...BD_ITEMS.flatMap(x=>{const v=it[x.id]||{};return [BSTAT_TXT[v.s]||"",v.date?thDate(v.date):"",v.note||""]}),
     `${r.progress||0}/${BD_ITEMS.length}`,r.followCount||0,r.summary,r.buddySign,thDate(r.buddySignDate),r.mgrAck])});
   return lines;
