@@ -658,7 +658,7 @@ $("#bd_clearYes").onclick=()=>{bdFill({});bdResetLink();try{localStorage.removeI
 
 /* ---------- Google Sheet connection ---------- */
 /* วาง URL ของ Web App (Google Apps Script) ที่ได้จากขั้นตอน Deploy ไว้ระหว่างเครื่องหมายคำพูดด้านล่าง */
-const SCRIPT_URL="";
+const SCRIPT_URL="https://script.google.com/macros/s/AKfycbxVYfMWNnqEreloqg1R5AbiKV4tc2pUMpFyX_vL97Kd46kvhHfk4uj6cAQ7k3S2jDc2Tg/exec";
 let booted=false,isAdmin=false,adminKey="";
 const MINE="ob-mine-v1";
 function toast(t){const el=$("#toast");el.textContent=t;el.hidden=false;clearTimeout(toast.t);toast.t=setTimeout(()=>el.hidden=true,2600)}
