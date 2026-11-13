@@ -43,6 +43,7 @@ section.blk{background:var(--card);border:1px solid var(--line);border-radius:14
 .blk-h h2{font-size:1.15rem}
 .hint{color:var(--sub);font-size:.88rem}
 .grid2{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px 16px}
+.pairrow{grid-column:1/-1;display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px 16px}
 .field{display:flex;flex-direction:column;gap:4px;min-width:0}
 .field>span{font-size:.9rem;color:var(--sub)}
 .photo{display:flex;flex-direction:column;gap:10px;align-items:flex-start}
@@ -521,8 +522,8 @@ const BD_ITEMS=BUDDY.items;
       <label class="field"><span class="req">Area</span><select id="bd_area"><option value="">เลือก Area</option>${areaOpts}</select></label>
       <label class="field"><span class="req">Shop Code / Shop Name</span><select id="bd_shop" disabled><option value="">เลือก Area ก่อน</option></select></label>
       <div class="field"><span>สาขาที่เลือก</span><div class="shopcard" id="bd_shopCard">ยังไม่ได้เลือกสาขา</div></div>
-      ${fld("bd_buddyId","รหัสพนักงานผู้สอน")}${fld("bd_buddy","ชื่อ Buddy (ผู้สอน)")}
-      ${fld("bd_supId","รหัสพนักงานหัวหน้างาน")}${fld("bd_sup","ชื่อหัวหน้างาน")}
+      <div class="pairrow">${fld("bd_buddyId","รหัสพนักงานผู้สอน")}${fld("bd_buddy","ชื่อ Buddy (ผู้สอน)")}</div>
+      <div class="pairrow">${fld("bd_supId","รหัสพนักงานหัวหน้างาน")}${fld("bd_sup","ชื่อหัวหน้างาน")}</div>
     </div>
   </section>
   <section class="blk">
